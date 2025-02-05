@@ -62,6 +62,36 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     });
+
+    // Auth tabs functionality
+    const authTabs = document.querySelectorAll('.auth-tab');
+    const authForms = document.querySelectorAll('.auth-form-container');
+
+    authTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            // Remove active class from all tabs and forms
+            authTabs.forEach(t => t.classList.remove('active'));
+            authForms.forEach(f => f.classList.remove('active'));
+
+            // Add active class to clicked tab and corresponding form
+            tab.classList.add('active');
+            document.getElementById(`${tab.dataset.tab}-container`).classList.add('active');
+        });
+    });
+
+    // Password confirmation validation
+    const registrationForm = document.getElementById('registration-form');
+    if (registrationForm) {
+        registrationForm.addEventListener('submit', function(e) {
+            const password = document.getElementById('reg-password').value;
+            const confirmPassword = document.getElementById('reg-confirm-password').value;
+
+            if (password !== confirmPassword) {
+                e.preventDefault();
+                showNotification('Passwords do not match', 'error');
+            }
+        });
+    }
 });
 
 // Dynamic content loading for Health Information section

@@ -253,4 +253,139 @@ footer {
     margin-top: 2rem;
     padding-top: 1rem;
     border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+/* Authentication Forms Styles */
+.auth-container {
+    max-width: 800px;
+    margin: 120px auto 50px;
+    padding: 2rem;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+}
+
+.auth-tabs {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.auth-tab {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #666;
+    position: relative;
+}
+
+.auth-tab.active {
+    color: #007bff;
+}
+
+.auth-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: #007bff;
+}
+
+.auth-form-container {
+    display: none;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.auth-form-container.active {
+    display: block;
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.auth-form h2 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    color: #555;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group select {
+    padding: 0.8rem;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1rem;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0,123,255,0.1);
+}
+
+.form-group.checkbox {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.auth-button {
+    padding: 1rem;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.auth-button:hover {
+    background-color: #0056b3;
+}
+
+.form-footer {
+    text-align: center;
+}
+
+.form-footer a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.form-footer a:hover {
+    text-decoration: underline;
+}
+
+/* Responsive styles for auth forms */
+@media (max-width: 768px) {
+    .auth-container {
+        margin: 100px 1rem 30px;
+        padding: 1rem;
+    }
+
+    .auth-tab {
+        padding: 0.8rem 1.5rem;
+    }
 } 
