@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const nav = document.getElementById('main-nav');
     const menuToggle = document.createElement('div');
     const navLinks = document.querySelector('.nav-links');
+    const dropdowns = document.querySelectorAll('.dropdown');
     
     // Add mobile menu button
     menuToggle.className = 'menu-toggle';
@@ -92,6 +93,39 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // Mobile menu toggle
+    const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+    mobileMenuBtn?.addEventListener('click', () => {
+        navLinks.classList.toggle('active');
+        mobileMenuBtn.classList.toggle('active');
+    });
+
+    // Dropdown functionality for mobile
+    dropdowns.forEach(dropdown => {
+        const link = dropdown.querySelector('a');
+        link.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768) {
+                e.preventDefault();
+                dropdown.classList.toggle('active');
+            }
+        });
+    });
+
+    // Hero Slider
+    const slides = document.querySelectorAll('.slide');
+    let currentSlide = 0;
+
+    function nextSlide() {
+        slides[currentSlide].classList.remove('active');
+        currentSlide = (currentSlide + 1) % slides.length;
+        slides[currentSlide].classList.add('active');
+    }
+
+    setInterval(nextSlide, 5000);
+
+    // News & Updates
+    loadNews();
 });
 
 // Dynamic content loading for Health Information section
@@ -326,4 +360,94 @@ const notificationStyles = `
 // Add styles to document
 const styleSheet = document.createElement('style');
 styleSheet.textContent = notificationStyles;
-document.head.appendChild(styleSheet); 
+document.head.appendChild(styleSheet);
+
+// Load News Items
+async function loadNews() {
+    const newsGrid = document.querySelector('.news-grid');
+    try {
+        const response = await fetch('https://sha.go.ke/api/news');
+        const news = await response.json();
+        
+        news.forEach(item => {
+            const newsCard = createNewsCard(item);
+            newsGrid.appendChild(newsCard);
+        });
+    } catch (error) {
+        console.error('Error loading news:', error);
+        // Load fallback content
+        loadFallbackNews();
+    }
+}
+
+function loadFallbackNews() {
+    const newsGrid = document.querySelector('.news-grid');
+    const fallbackNews = [
+        {
+            title: 'New Healthcare Facilities Added',
+            date: '2024-03-15',
+            excerpt: 'SHA expands its network with 50 new healthcare facilities...'
+        },
+        {
+            title: 'Updated Benefits Package',
+            date: '2024-03-10',
+            excerpt: 'Members to enjoy enhanced benefits starting April 2024...'
+        },
+        // Add more fallback news items
+    ];
+
+    fallbackNews.forEach(item => {
+        const newsCard = createNewsCard(item);
+        newsGrid.appendChild(newsCard);
+    });
+}
+
+function createNewsCard(item) {
+    const card = document.createElement('div');
+    card.className = 'news-card';
+    card.innerHTML = `
+        <h3>${item.title}</h3>
+        <p class="date">${formatDate(item.date)}</p>
+        <p>${item.excerpt}</p>
+        <a href="#" class="read-more">Read More</a>
+    `;
+    return card;
+}
+
+function formatDate(dateString) {
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString('en-US', options);
+}
+
+// Statistics Counter Animation
+const counters = document.querySelectorAll('.counter');
+const speed = 200;
+
+function animateCounter(counter) {
+    const target = +counter.innerText.replace(/[^\d]/g, '');
+    const count = +counter.getAttribute('data-count') || 0;
+    const increment = target / speed;
+
+    if (count < target) {
+        counter.setAttribute('data-count', Math.ceil(count + increment));
+        counter.innerText = Math.ceil(count + increment).toLocaleString() + '+';
+        setTimeout(() => animateCounter(counter), 1);
+    } else {
+        counter.innerText = target.toLocaleString() + '+';
+    }
+}
+
+// Animate counters when they come into view
+const observerOptions = {
+    threshold: 0.5
+};
+
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            animateCounter(entry.target);
+        }
+    });
+}, observerOptions);
+
+counters.forEach(counter => observer.observe(counter)); 
