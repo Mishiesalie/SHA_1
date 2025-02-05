@@ -177,205 +177,165 @@ window.addEventListener('load', function() {
 
 // API Configuration
 const API_CONFIG = {
-    BASE_URL: 'https://sha.go.ke/api',
+    BASE_URL: 'https://sha.go.ke/api/v1',
     ENDPOINTS: {
-        REGISTER_INDIVIDUAL: '/register/individual',
-        REGISTER_EMPLOYER: '/register/employer',
-        ASSISTED_REGISTRATION: '/register/assisted',
+        // Authentication
         LOGIN: '/auth/login',
-        ELIGIBILITY_CHECK: '/eligibility/check',
-        E_CONTRACTING: '/contracting'
+        LOGOUT: '/auth/logout',
+        RESET_PASSWORD: '/auth/reset-password',
+        
+        // Registration
+        REGISTER_MEMBER: '/registration/member',
+        REGISTER_EMPLOYER: '/registration/employer',
+        REGISTER_PROVIDER: '/registration/healthcare-provider',
+        VERIFY_ID: '/registration/verify-id',
+        
+        // Member Services
+        MEMBER_PROFILE: '/members/profile',
+        DEPENDENTS: '/members/dependents',
+        CONTRIBUTION_HISTORY: '/members/contributions',
+        CLAIMS_HISTORY: '/members/claims',
+        BENEFITS: '/members/benefits',
+        
+        // Healthcare Provider Services
+        PROVIDER_PROFILE: '/providers/profile',
+        SUBMIT_CLAIM: '/providers/claims/submit',
+        CLAIMS_STATUS: '/providers/claims/status',
+        E_CONTRACTING: '/providers/contracting',
+        
+        // Employer Services
+        EMPLOYER_PROFILE: '/employers/profile',
+        EMPLOYEE_MANAGEMENT: '/employers/employees',
+        BULK_REGISTRATION: '/employers/bulk-registration',
+        PAYMENT_HISTORY: '/employers/payments',
+        
+        // General Services
+        FACILITIES: '/facilities/search',
+        NEWS: '/news',
+        ANNOUNCEMENTS: '/announcements',
+        DOWNLOADS: '/resources/downloads',
+        FAQS: '/resources/faqs'
+    },
+    
+    // API Headers
+    HEADERS: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
     }
 };
 
-// Authentication and Registration Service
-class SHAService {
-    static async registerIndividual(userData) {
+// API Service Class
+class SHAApiService {
+    static getAuthHeader() {
+        const token = localStorage.getItem('shaAuthToken');
+        return token ? { 'Authorization': `Bearer ${token}` } : {};
+    }
+
+    static async request(endpoint, options = {}) {
         try {
-            const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.REGISTER_INDIVIDUAL}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(userData)
+            const url = API_CONFIG.BASE_URL + endpoint;
+            const headers = {
+                ...API_CONFIG.HEADERS,
+                ...this.getAuthHeader(),
+                ...options.headers
+            };
+
+            const response = await fetch(url, {
+                ...options,
+                headers
             });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
             return await response.json();
         } catch (error) {
-            console.error('Registration error:', error);
+            console.error('API request failed:', error);
             throw error;
         }
     }
 
-    static async registerEmployer(employerData) {
-        try {
-            const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.REGISTER_EMPLOYER}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(employerData)
-            });
-            return await response.json();
-        } catch (error) {
-            console.error('Employer registration error:', error);
-            throw error;
-        }
-    }
-
-    static async checkEligibility(criteria) {
-        try {
-            const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ELIGIBILITY_CHECK}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(criteria)
-            });
-            return await response.json();
-        } catch (error) {
-            console.error('Eligibility check error:', error);
-            throw error;
-        }
-    }
-
+    // Authentication Methods
     static async login(credentials) {
-        try {
-            const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.LOGIN}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(credentials)
-            });
-            return await response.json();
-        } catch (error) {
-            console.error('Login error:', error);
-            throw error;
-        }
-    }
-}
-
-// Form handling for registration and login
-document.addEventListener('DOMContentLoaded', function() {
-    // Registration form handling
-    const registrationForm = document.getElementById('registration-form');
-    if (registrationForm) {
-        registrationForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const formData = new FormData(this);
-            const userData = Object.fromEntries(formData.entries());
-            
-            try {
-                const response = await SHAService.registerIndividual(userData);
-                if (response.success) {
-                    showNotification('Registration successful!', 'success');
-                    // Redirect to dashboard or login page
-                    window.location.href = '/login';
-                } else {
-                    showNotification(response.message || 'Registration failed', 'error');
-                }
-            } catch (error) {
-                showNotification('An error occurred during registration', 'error');
-            }
+        return this.request(API_CONFIG.ENDPOINTS.LOGIN, {
+            method: 'POST',
+            body: JSON.stringify(credentials)
         });
     }
 
-    // Login form handling
-    const loginForm = document.getElementById('login-form');
-    if (loginForm) {
-        loginForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const formData = new FormData(this);
-            const credentials = Object.fromEntries(formData.entries());
-            
-            try {
-                const response = await SHAService.login(credentials);
-                if (response.success) {
-                    // Store auth token
-                    localStorage.setItem('shaAuthToken', response.token);
-                    showNotification('Login successful!', 'success');
-                    // Redirect to dashboard
-                    window.location.href = '/dashboard';
-                } else {
-                    showNotification(response.message || 'Login failed', 'error');
-                }
-            } catch (error) {
-                showNotification('An error occurred during login', 'error');
-            }
+    static async logout() {
+        return this.request(API_CONFIG.ENDPOINTS.LOGOUT, {
+            method: 'POST'
         });
     }
-});
 
-// Utility function for notifications
-function showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    notification.textContent = message;
-    
-    document.body.appendChild(notification);
-    
-    // Remove notification after 3 seconds
-    setTimeout(() => {
-        notification.remove();
-    }, 3000);
+    // Registration Methods
+    static async registerMember(memberData) {
+        return this.request(API_CONFIG.ENDPOINTS.REGISTER_MEMBER, {
+            method: 'POST',
+            body: JSON.stringify(memberData)
+        });
+    }
+
+    static async verifyId(idData) {
+        return this.request(API_CONFIG.ENDPOINTS.VERIFY_ID, {
+            method: 'POST',
+            body: JSON.stringify(idData)
+        });
+    }
+
+    // Member Services
+    static async getMemberProfile() {
+        return this.request(API_CONFIG.ENDPOINTS.MEMBER_PROFILE);
+    }
+
+    static async getContributions() {
+        return this.request(API_CONFIG.ENDPOINTS.CONTRIBUTION_HISTORY);
+    }
+
+    // Healthcare Provider Services
+    static async submitClaim(claimData) {
+        return this.request(API_CONFIG.ENDPOINTS.SUBMIT_CLAIM, {
+            method: 'POST',
+            body: JSON.stringify(claimData)
+        });
+    }
+
+    // Employer Services
+    static async registerEmployees(employeesData) {
+        return this.request(API_CONFIG.ENDPOINTS.BULK_REGISTRATION, {
+            method: 'POST',
+            body: JSON.stringify(employeesData)
+        });
+    }
+
+    // General Services
+    static async searchFacilities(searchParams) {
+        const queryString = new URLSearchParams(searchParams).toString();
+        return this.request(`${API_CONFIG.ENDPOINTS.FACILITIES}?${queryString}`);
+    }
+
+    static async getNews() {
+        return this.request(API_CONFIG.ENDPOINTS.NEWS);
+    }
+
+    static async getAnnouncements() {
+        return this.request(API_CONFIG.ENDPOINTS.ANNOUNCEMENTS);
+    }
 }
 
-// Add notification styles to CSS
-const notificationStyles = `
-    .notification {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 15px 25px;
-        border-radius: 5px;
-        color: white;
-        z-index: 1000;
-        animation: slideIn 0.3s ease-out;
-    }
-
-    .notification.success {
-        background-color: #4CAF50;
-    }
-
-    .notification.error {
-        background-color: #f44336;
-    }
-
-    .notification.info {
-        background-color: #2196F3;
-    }
-
-    @keyframes slideIn {
-        from {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
-`;
-
-// Add styles to document
-const styleSheet = document.createElement('style');
-styleSheet.textContent = notificationStyles;
-document.head.appendChild(styleSheet);
-
-// Load News Items
+// Update the news loading function to use the new API service
 async function loadNews() {
     const newsGrid = document.querySelector('.news-grid');
     try {
-        const response = await fetch('https://sha.go.ke/api/news');
-        const news = await response.json();
-        
+        const news = await SHAApiService.getNews();
         news.forEach(item => {
             const newsCard = createNewsCard(item);
             newsGrid.appendChild(newsCard);
         });
     } catch (error) {
         console.error('Error loading news:', error);
-        // Load fallback content
         loadFallbackNews();
     }
 }
@@ -450,4 +410,94 @@ const observer = new IntersectionObserver((entries) => {
     });
 }, observerOptions);
 
-counters.forEach(counter => observer.observe(counter)); 
+counters.forEach(counter => observer.observe(counter));
+
+// Update form submission handlers to use the new API service
+document.getElementById('login-form')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const credentials = Object.fromEntries(formData.entries());
+
+    try {
+        const response = await SHAApiService.login(credentials);
+        if (response.token) {
+            localStorage.setItem('shaAuthToken', response.token);
+            showNotification('Login successful!', 'success');
+            window.location.href = '/dashboard';
+        }
+    } catch (error) {
+        showNotification('Login failed. Please check your credentials.', 'error');
+    }
+});
+
+document.getElementById('registration-form')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const memberData = Object.fromEntries(formData.entries());
+
+    try {
+        const response = await SHAApiService.registerMember(memberData);
+        if (response.success) {
+            showNotification('Registration successful!', 'success');
+            window.location.href = '/login';
+        }
+    } catch (error) {
+        showNotification('Registration failed. Please try again.', 'error');
+    }
+});
+
+// Utility function for notifications
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Remove notification after 3 seconds
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+// Add notification styles to CSS
+const notificationStyles = `
+    .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 25px;
+        border-radius: 5px;
+        color: white;
+        z-index: 1000;
+        animation: slideIn 0.3s ease-out;
+    }
+
+    .notification.success {
+        background-color: #4CAF50;
+    }
+
+    .notification.error {
+        background-color: #f44336;
+    }
+
+    .notification.info {
+        background-color: #2196F3;
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+`;
+
+// Add styles to document
+const styleSheet = document.createElement('style');
+styleSheet.textContent = notificationStyles;
+document.head.appendChild(styleSheet); 
