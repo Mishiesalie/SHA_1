@@ -126,6 +126,71 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // News & Updates
     loadNews();
+
+    // Modal handling
+    const modal = document.getElementById('auth-modal');
+    const modalClose = document.getElementById('modal-close');
+    const registerButtons = document.querySelectorAll('a[href="#register"]');
+    const portalButtons = document.querySelectorAll('.portal-btn');
+
+    function openModal() {
+        modal.classList.add('active');
+        document.body.classList.add('modal-open');
+    }
+
+    function closeModal() {
+        modal.classList.remove('active');
+        document.body.classList.remove('modal-open');
+    }
+
+    // Open modal on register/portal button click
+    registerButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            openModal();
+            // Switch to register tab if clicked from register button
+            if (this.getAttribute('href') === '#register') {
+                document.querySelector('[data-tab="register"]').click();
+            }
+        });
+    });
+
+    portalButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            openModal();
+            // Default to login tab for portal button
+            document.querySelector('[data-tab="login"]').click();
+        });
+    });
+
+    // Close modal
+    modalClose.addEventListener('click', closeModal);
+
+    // Close modal when clicking outside
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+
+    // Close modal on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeModal();
+        }
+    });
+
+    // Password visibility toggle
+    document.querySelectorAll('.toggle-password').forEach(toggle => {
+        toggle.addEventListener('click', function() {
+            const input = this.previousElementSibling;
+            const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+            input.setAttribute('type', type);
+            this.classList.toggle('fa-eye');
+            this.classList.toggle('fa-eye-slash');
+        });
+    });
 });
 
 // Dynamic content loading for Health Information section
