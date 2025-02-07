@@ -191,6 +191,71 @@ document.addEventListener('DOMContentLoaded', function() {
             this.classList.toggle('fa-eye-slash');
         });
     });
+
+    // Chatbot functionality
+    const chatbotToggle = document.querySelector('.chatbot-toggle');
+    const chatbotWindow = document.querySelector('.chatbot-window');
+    const closeChat = document.querySelector('.close-chat');
+    const chatInput = document.getElementById('chat-input');
+    const sendMessage = document.querySelector('.send-message');
+    const chatMessages = document.querySelector('.chat-messages');
+    const notificationBadge = document.querySelector('.notification-badge');
+
+    // Show notification badge after 3 seconds
+    setTimeout(() => {
+        notificationBadge.classList.remove('hidden');
+    }, 3000);
+
+    function toggleChat() {
+        chatbotWindow.classList.toggle('hidden');
+        notificationBadge.classList.add('hidden');
+    }
+
+    function addMessage(message, isUser = false) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+        
+        const content = document.createElement('div');
+        content.className = 'message-content';
+        content.textContent = message;
+        
+        const time = document.createElement('div');
+        time.className = 'message-time';
+        time.textContent = 'Just now';
+        
+        messageDiv.appendChild(content);
+        messageDiv.appendChild(time);
+        chatMessages.appendChild(messageDiv);
+        
+        // Scroll to bottom
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function handleUserMessage() {
+        const message = chatInput.value.trim();
+        if (!message) return;
+
+        // Add user message
+        addMessage(message, true);
+        chatInput.value = '';
+
+        // Get bot response
+        setTimeout(() => {
+            const response = getBotResponse(message);
+            addMessage(response);
+        }, 500);
+    }
+
+    chatbotToggle.addEventListener('click', toggleChat);
+    closeChat.addEventListener('click', toggleChat);
+
+    sendMessage.addEventListener('click', handleUserMessage);
+    
+    chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            handleUserMessage();
+        }
+    });
 });
 
 // Dynamic content loading for Health Information section

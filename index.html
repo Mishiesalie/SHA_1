@@ -269,5 +269,38 @@
             </div>
         </div>
     </footer>
+
+    <!-- Add this before the closing body tag -->
+    <div class="chatbot-container">
+        <div class="chatbot-toggle">
+            <i class="fas fa-comments"></i>
+            <span class="notification-badge hidden">1</span>
+        </div>
+        
+        <div class="chatbot-window hidden">
+            <div class="chatbot-header">
+                <h3>SHA Assistant</h3>
+                <button class="close-chat">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="chat-messages">
+                <div class="message bot">
+                    <div class="message-content">
+                        Hello! I'm your SHA virtual assistant. How can I help you today?
+                    </div>
+                    <div class="message-time">Just now</div>
+                </div>
+            </div>
+            
+            <div class="chat-input">
+                <input type="text" placeholder="Type your message..." id="chat-input">
+                <button class="send-message">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
