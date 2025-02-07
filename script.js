@@ -201,6 +201,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const chatMessages = document.querySelector('.chat-messages');
     const notificationBadge = document.querySelector('.notification-badge');
 
+    let isTyping = false;
+
     // Show notification badge after 3 seconds
     setTimeout(() => {
         notificationBadge.classList.remove('hidden');
@@ -209,6 +211,17 @@ document.addEventListener('DOMContentLoaded', function() {
     function toggleChat() {
         chatbotWindow.classList.toggle('hidden');
         notificationBadge.classList.add('hidden');
+        if (!chatbotWindow.classList.contains('hidden')) {
+            chatInput.focus();
+        }
+    }
+
+    function formatTime(date) {
+        return new Intl.DateTimeFormat('en-US', {
+            hour: 'numeric',
+            minute: 'numeric',
+            hour12: true
+        }).format(date);
     }
 
     function addMessage(message, isUser = false) {
@@ -217,11 +230,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const content = document.createElement('div');
         content.className = 'message-content';
-        content.textContent = message;
+        content.textContent = message.text;
         
         const time = document.createElement('div');
         time.className = 'message-time';
-        time.textContent = 'Just now';
+        time.textContent = formatTime(new Date(message.timestamp));
         
         messageDiv.appendChild(content);
         messageDiv.appendChild(time);
@@ -231,30 +244,88 @@ document.addEventListener('DOMContentLoaded', function() {
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    function handleUserMessage() {
-        const message = chatInput.value.trim();
-        if (!message) return;
+    function addTypingIndicator() {
+        if (isTyping) return;
+        
+        isTyping = true;
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'message bot typing';
+        typingDiv.innerHTML = `
+            <div class="message-content">
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+            </div>
+        `;
+        chatMessages.appendChild(typingDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
 
-        // Add user message
-        addMessage(message, true);
-        chatInput.value = '';
+    function removeTypingIndicator() {
+        const typingIndicator = chatMessages.querySelector('.typing');
+        if (typingIndicator) {
+            typingIndicator.remove();
+        }
+        isTyping = false;
+    }
 
-        // Get bot response
-        setTimeout(() => {
-            const response = getBotResponse(message);
-            addMessage(response);
-        }, 500);
+    async function handleUserMessage() {
+        const messageText = chatInput.value.trim();
+        if (!messageText || isTyping) return;
+
+        try {
+            // Clear input
+            chatInput.value = '';
+
+            // Add user message immediately
+            const userMessage = {
+                text: messageText,
+                timestamp: new Date(),
+                sender: 'user'
+            };
+            addMessage(userMessage, true);
+
+            // Show typing indicator
+            addTypingIndicator();
+
+            // Send message to backend
+            const response = await ChatbotService.sendMessage(messageText);
+            
+            // Remove typing indicator
+            removeTypingIndicator();
+
+            // Add bot response
+            addMessage(response.data.botMessage);
+
+        } catch (error) {
+            console.error('Error handling message:', error);
+            removeTypingIndicator();
+            addMessage({
+                text: "I'm sorry, I'm having trouble responding right now. Please try again later.",
+                timestamp: new Date(),
+                sender: 'bot'
+            });
+        }
     }
 
     chatbotToggle.addEventListener('click', toggleChat);
-    closeChat.addEventListener('click', toggleChat);
+    closeChat.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleChat();
+    });
 
     sendMessage.addEventListener('click', handleUserMessage);
     
     chatInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
             handleUserMessage();
         }
+    });
+
+    // Prevent closing when clicking inside the chat window
+    chatbotWindow.addEventListener('click', (e) => {
+        e.stopPropagation();
     });
 });
 
@@ -630,4 +701,28 @@ const notificationStyles = `
 // Add styles to document
 const styleSheet = document.createElement('style');
 styleSheet.textContent = notificationStyles;
-document.head.appendChild(styleSheet); 
+document.head.appendChild(styleSheet);
+
+// Add this to your existing JavaScript
+class ChatbotService {
+    static async sendMessage(message) {
+        try {
+            const response = await fetch('/api/v1/chatbot/message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to send message');
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Error sending message:', error);
+            throw error;
+        }
+    }
+} 
